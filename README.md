@@ -7,9 +7,15 @@ Write a sentence, and for each word (this requires tokenization), each word will
 
 
 Front-End: HTML, CSS, Angular
+Joe, Alan
+
 Back-end: Python, Flask or Express.js
 Database: Firebase
+Shasta, Michael, Paul, Matias, Joey, Farzaan
 
 
+Timeline:
+
+Artificial Due Date: Dec 10
 
 
