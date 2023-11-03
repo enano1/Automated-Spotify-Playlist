@@ -10,9 +10,9 @@ Front-End: HTML, CSS, Angular
 Joe, Alan
 
 Back-end: Python, Flask
-Database: Firebase (Shasta)
-Shasta, Michael, Paul, Matias, Joey, Farzaan
-
+Database: Firebase (Shasta, Joey)
+Spotify: (Michael, Paul)
+ImageGen: (Farzaan, Matias)
 
 Timeline:
 
