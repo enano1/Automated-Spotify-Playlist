@@ -1,67 +1,85 @@
-from flask import Flask, session, render_template, request, redirect
-import pyrebase
+import os
+import pathlib
+
+import requests
+from flask import Flask, session, abort, redirect, request, render_template
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+from pip._vendor import cachecontrol
+import google.auth.transport.requests
+
+app = Flask("Google Login App")
+app.secret_key = "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" # make sure this matches with that's in client_secret.json
+
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
+
+GOOGLE_CLIENT_ID = "341501985016-cneblrth1bp5gmda83jrvoaf1vn8cdkp.apps.googleusercontent.com"
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+
+flow = Flow.from_client_secrets_file(
+    client_secrets_file=client_secrets_file,
+    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
+    redirect_uri="http://127.0.0.1:5000/callback"
+)
 
 
-app = Flask(__name__)
+def login_is_required(function):
+    def wrapper(*args, **kwargs):
+        if "google_id" not in session:
+            return abort(401)  # Authorization required
+        else:
+            return function()
 
-config = {
-    "apiKey": "AIzaSyDMsrURwbp5tIAMjhEvZ3HSTFu06pKS2pQ",
-    "authDomain": "final-project-8c911.firebaseapp.com",
-    "projectId": "final-project-8c911",
-    "storageBucket": "final-project-8c911.appspot.com",
-    "messagingSenderId": "341501985016",
-    "appId": "1:341501985016:web:1d88322579d6fe66777b0d",
-    "measurementId": "G-36YHC3NKXF",
-    "databaseURL": ""
-}
-
-firebase = pyrebase.initialize_app(config)
-auth = firebase.auth()
+    return wrapper
 
 
-app.secret_key = 'secret'
-@app.route('/', methods=['POST', 'GET'])
-def index():
-    if 'user' in session:
-        return 'Hi, {}'.format(session['user'])
+@app.route("/login")
+def login():
+    authorization_url, state = flow.authorization_url()
+    session["state"] = state
+    return redirect(authorization_url)
 
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        try:
-            # Assume successful login without checking Firebase for simplicity
-            session['user'] = email
-            return redirect('/welcome')
-        except:
-            return 'Failed to login'
 
-    return render_template('home.html')
+@app.route("/callback")
+def callback():
+    flow.fetch_token(authorization_response=request.url)
 
-@app.route('/register', methods=['POST', 'GET'])
-def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        try:
-            # Assume successful registration without checking Firebase for simplicity
-            session['user'] = email
-            return redirect('/welcome')
-        except:
-            return 'Failed to register user'
+    if not session["state"] == request.args["state"]:
+        abort(500)  # State does not match!
 
-    return render_template('register.html')
+    credentials = flow.credentials
+    request_session = requests.session()
+    cached_session = cachecontrol.CacheControl(request_session)
+    token_request = google.auth.transport.requests.Request(session=cached_session)
 
-@app.route('/welcome')
-def welcome():
-    if 'user' in session:
-        return render_template('welcome.html', user=session['user'])
-    else:
-        return redirect('/')
+    id_info = id_token.verify_oauth2_token(
+        id_token=credentials._id_token,
+        request=token_request,
+        audience=GOOGLE_CLIENT_ID
+    )
 
-@app.route('/logout')
+    session["google_id"] = id_info.get("sub")
+    session["name"] = id_info.get("name")
+    return redirect("/protected_area")
+
+
+@app.route("/logout")
 def logout():
-    session.pop('user')
-    return redirect('/')
+    session.clear()
+    return redirect("/")
+
+
+@app.route("/")
+def index():
+    return "Hello World <a href='/login'><button>Login</button></a>"
+
+
+@app.route("/protected_area")
+@login_is_required
+def protected_area():
+    user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
+    return render_template('welcome.html', user_name=user_name)
+
 
 if __name__ == '__main__':
     app.run()
