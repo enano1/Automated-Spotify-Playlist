@@ -8,6 +8,8 @@ from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
 
+from dotenv import load_dotenv
+load_dotenv()  
 # hi hi
 
 app = Flask("Google Login App")
@@ -17,6 +19,12 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for loca
 
 GOOGLE_CLIENT_ID = "341501985016-cneblrth1bp5gmda83jrvoaf1vn8cdkp.apps.googleusercontent.com"
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+
+SPOTIFY_CLIENT_ID = os.environ.get("CLIENT_ID") 
+SPOTIFY_CLIENT_SECRET = os.environ.get("SECRET_ID") 
+SPOTIFY_REDIRECT_URI = "http://127.0.0.1:5000/spotify_callback"
+SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
+SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
@@ -82,6 +90,73 @@ def protected_area():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
     return render_template('welcome.html', user_name=user_name)
 
+
+@app.route("/spotify_login")
+def spotify_login():
+    scope = "user-read-private"  # Add or modify scopes as needed
+    auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
+    return redirect(auth_url)
+
+# Add a new route for Spotify Callback
+@app.route("/spotify_callback")
+def spotify_callback():
+    code = request.args.get('code')
+    token_data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'client_id': SPOTIFY_CLIENT_ID,
+        'client_secret': SPOTIFY_CLIENT_SECRET
+    }
+    response = requests.post(SPOTIFY_TOKEN_URL, data=token_data)
+    token_info = response.json()
+    # Store Spotify token in session or handle it as needed
+    session["spotify_token"] = token_info.get('access_token')
+    return redirect("/protected_area")
+
+@app.route('/spotify_test', methods=['GET', 'POST'])
+def spotify_test():
+    if request.method == 'POST':
+        # Extract the text input from the form
+        text_input = request.form['text_input']
+        results = parse_sentence(text_input)    
+        for result in results:
+            print(result['name'], " ", result['artists'][0]['name'])
+        # for track in results['tracks']['items']:
+        #     print(track['name'], '-', track['artists'][0]['name'])
+        # Redirect or render a template after processing
+        return redirect("/protected_area")  # Redirect to some other page or
+
+    # If it's a GET request, just render the form page
+    return render_template("/protected_area")
+
+def parse_sentence(input):
+    sentence = input.split()
+    spotify_token = session.get("spotify_token")
+    print(sentence)
+    results = []
+    for word in sentence:
+        search_result = search_spotify(word, spotify_token)
+        if search_result['tracks'] and search_result['tracks']['items']:
+            print(search_result['tracks']['items'][0]['name'])
+            results.append(search_result['tracks']['items'][0])
+            
+        else:
+            return None
+    return results
+
+def search_spotify(query, token):
+    search_url = 'https://api.spotify.com/v1/search'
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    params = {
+        'q': query,
+        'type': 'track',  # or 'artist', 'album', 'playlist'
+        'limit': 10  # number of results to return
+    }
+    response = requests.get(search_url, headers=headers, params=params)
+    return response.json()
 
 if __name__ == '__main__':
     app.run()

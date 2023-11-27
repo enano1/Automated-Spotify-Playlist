@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Welcome</title>
 </head>
+
 <body>
     <h1>Welcome, {{ user_name }}!</h1>
     <p>Enjoy your time on our platform.</p>
+    <a href='/spotify_login'><button>Spotify Login</button></a>
+
+    <form action="/spotify_test" method="post">
+        <label for="text_input">Enter Text:</label>
+        <input type="text" id="text_input" name="text_input">
+        <button type="submit">Submit</button>
+    </form>
+
     <a href='/logout'><button>Logout</button></a>
 </body>
+
 </html>
