@@ -10,18 +10,18 @@ import google.auth.transport.requests
 
 from dotenv import load_dotenv
 load_dotenv()  
-# hi hi
+# hi hi``
 
 app = Flask("Google Login App")
-app.secret_key = "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" # make sure this matches with that's in client_secret.json
-
+app.secret_key = os.environ.get("SECRET_KEY") # make sure this matches with that's in client_secret.json
+print(app.secret_key)
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
 GOOGLE_CLIENT_ID = "341501985016-cneblrth1bp5gmda83jrvoaf1vn8cdkp.apps.googleusercontent.com"
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
 
-SPOTIFY_CLIENT_ID = os.environ.get("CLIENT_ID") 
-SPOTIFY_CLIENT_SECRET = os.environ.get("SECRET_ID") 
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID") 
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_SECRET_ID") 
 SPOTIFY_REDIRECT_URI = "http://127.0.0.1:5000/spotify_callback"
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -122,8 +122,7 @@ def spotify_test():
         results = parse_sentence(text_input)    
         for result in results:
             print(result['name'], " ", result['artists'][0]['name'])
-        # for track in results['tracks']['items']:
-        #     print(track['name'], '-', track['artists'][0]['name'])
+        
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
