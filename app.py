@@ -122,7 +122,7 @@ def spotify_test():
         results = parse_sentence(text_input)    
         for result in results:
             print(result['name'], " ", result['artists'][0]['name'])
-        
+            
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
@@ -136,7 +136,11 @@ def parse_sentence(input):
     results = []
     for word in sentence:
         search_result = search_spotify(word, spotify_token)
+        
         if search_result['tracks'] and search_result['tracks']['items']:
+            closest_result = search_result['tracks']['items'][0]
+            for track in search_result['tracks']['items']:
+                "hello"
             print(search_result['tracks']['items'][0]['name'])
             results.append(search_result['tracks']['items'][0])
             
@@ -152,7 +156,7 @@ def search_spotify(query, token):
     params = {
         'q': query,
         'type': 'track',  # or 'artist', 'album', 'playlist'
-        'limit': 10  # number of results to return
+        'limit': 20  # number of results to return
     }
     response = requests.get(search_url, headers=headers, params=params)
     return response.json()
