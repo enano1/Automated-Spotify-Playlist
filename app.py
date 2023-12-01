@@ -123,7 +123,7 @@ def spotify_test():
         results = parse_sentence(text_input)    
         for result in results:
             print(result['name'], " ", result['artists'][0]['name'])
-            
+
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
@@ -160,8 +160,9 @@ def parse_sentence(input):
 def compare_similarity(s1, s2):
     """compares the similarity of two strings (Levenshtein difference)"""
     # Code from https://www.educative.io/answers/the-levenshtein-distance-algorithm
-    a = s1
-    b = s2
+    a = s1.lower()
+    b = s2.lower()
+    
 
     # Declaring array 'D' with rows = len(a) + 1 and columns = len(b) + 1:
     D = [[0 for i in range(len(b) + 1)] for j in range(len(a) + 1)]
