@@ -1,6 +1,7 @@
 import os
 import pathlib
 
+import math
 import requests
 from flask import Flask, session, abort, redirect, request, render_template
 from google.oauth2 import id_token
@@ -136,27 +137,67 @@ def parse_sentence(input):
     results = []
     for word in sentence:
         search_result = search_spotify(word, spotify_token)
-        
+
         if search_result['tracks'] and search_result['tracks']['items']:
             closest_result = search_result['tracks']['items'][0]
+            closest_score = math.inf
             for track in search_result['tracks']['items']:
-                "hello"
-            print(search_result['tracks']['items'][0]['name'])
-            results.append(search_result['tracks']['items'][0])
+                track_string = track['name']
+                similarity = compare_similarity(word, track_string)
+                if similarity < closest_score:
+                    closest_result = track
+                    closest_score = similarity
+                print(track_string, similarity)
+                if similarity == 0:
+                    break
+            print()
+            results.append(closest_result)
             
         else:
             return None
     return results
+
+def compare_similarity(s1, s2):
+    """compares the similarity of two strings (Levenshtein difference)"""
+    # Code from https://www.educative.io/answers/the-levenshtein-distance-algorithm
+    a = s1
+    b = s2
+
+    # Declaring array 'D' with rows = len(a) + 1 and columns = len(b) + 1:
+    D = [[0 for i in range(len(b) + 1)] for j in range(len(a) + 1)]
+    # Initialising first row:
+    for i in range(len(a) + 1):
+        D[i][0] = i
+    # Initialising first column:
+    for j in range(len(b) + 1):
+        D[0][j] = j
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            if a[i - 1] == b[j - 1]:
+                D[i][j] = D[i - 1][j - 1]
+            else:
+                # Adding 1 to account for the cost of operation
+                insertion = 1 + D[i][j - 1]
+                deletion = 1 + D[i - 1][j]
+                replacement = 1 + D[i - 1][j - 1]
+
+                # Choosing the best option:
+                D[i][j] = min(insertion, deletion, replacement)
+
+    return D[len(a)][len(b)]
+
 
 def search_spotify(query, token):
     search_url = 'https://api.spotify.com/v1/search'
     headers = {
         'Authorization': f'Bearer {token}'
     }
+    refined_query = f'"{query}"'
+
     params = {
-        'q': query,
-        'type': 'track',  # or 'artist', 'album', 'playlist'
-        'limit': 20  # number of results to return
+        'q': refined_query,
+        'type': 'track',
+        'limit': 50  # number of results to return
     }
     response = requests.get(search_url, headers=headers, params=params)
     return response.json()
