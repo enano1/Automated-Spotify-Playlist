@@ -94,7 +94,7 @@ def protected_area():
 
 @app.route("/spotify_login")
 def spotify_login():
-    scope = "user-read-private"  # Add or modify scopes as needed
+    scope = "user-read-private playlist-modify-public playlist-modify-private"  # Add or modify scopes as needed
     auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
     return redirect(auth_url)
 
@@ -111,6 +111,21 @@ def spotify_callback():
     }
     response = requests.post(SPOTIFY_TOKEN_URL, data=token_data)
     token_info = response.json()
+
+    access_token = token_info.get('access_token')
+    session["spotify_token"] = access_token
+
+    # Get user profile information to retrieve Spotify user ID
+    if access_token:
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        user_profile_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
+        user_profile_info = user_profile_response.json()
+
+        session["spotify_user_id"] = user_profile_info.get('id')
+
+
     # Store Spotify token in session or handle it as needed
     session["spotify_token"] = token_info.get('access_token')
     return redirect("/protected_area")
@@ -120,15 +135,52 @@ def spotify_test():
     if request.method == 'POST':
         # Extract the text input from the form
         text_input = request.form['text_input']
-        results = parse_sentence(text_input)    
-        for result in results:
-            print(result['name'], " ", result['artists'][0]['name'])
+        # results = parse_sentence(text_input)    
+        # for result in results:
+        #     print(result['name'], " ", result['artists'][0]['name'])
+
+        spotify_token = session.get("spotify_token")
+        playlist = create_playlist("test", spotify_token)
+        print(playlist)
+        # add_songs(playlist, results)
 
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
     # If it's a GET request, just render the form page
     return render_template("/protected_area")
+
+def create_playlist(playlist_name, spotify_token):
+    # Spotify API endpoint for creating a playlist
+    user_id = session["spotify_user_id"]
+    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+    
+    # Headers for the POST request, including the authorization token
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with the playlist name
+    data = {
+        "name": playlist_name,
+        "description": "Created with Python",
+        "public": False  # Set to True if you want the playlist to be public
+    }
+
+    # Sending POST request to the Spotify API
+    response = requests.post(url, headers=headers, json=data)
+    print(response.status_code)
+    print(response.json())
+
+    # Check if the request was successful
+    if response.status_code == 201:
+        return response.json()  # Returns the created playlist details as JSON
+    else:
+        return None  
+    
+def add_songs(playlist_id, results):
+    """do stuff"""
 
 def parse_sentence(input):
     sentence = input.split()
@@ -154,7 +206,7 @@ def parse_sentence(input):
             results.append(closest_result)
             
         else:
-            return None
+            continue
     return results
 
 def compare_similarity(s1, s2):
