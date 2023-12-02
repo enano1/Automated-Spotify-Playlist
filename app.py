@@ -135,20 +135,60 @@ def spotify_test():
     if request.method == 'POST':
         # Extract the text input from the form
         text_input = request.form['text_input']
-        # results = parse_sentence(text_input)    
-        # for result in results:
-        #     print(result['name'], " ", result['artists'][0]['name'])
+        results = parse_sentence(text_input)    
+        for result in results:
+            print(result['name'], " ", result['artists'][0]['name'])
 
         spotify_token = session.get("spotify_token")
         playlist = create_playlist("test", spotify_token)
-        print(playlist)
-        # add_songs(playlist, results)
+        if playlist is not None:
+            playlist_id = playlist['id']
+
+        results_ids = []
+        for song in results:
+            results_ids.append(song['uri'])
+        
+
+        add_songs(playlist_id, results_ids, spotify_token)
 
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
     # If it's a GET request, just render the form page
     return render_template("/protected_area")
+
+def add_songs(playlist_id, track_uris, spotify_token):
+    """
+    Adds songs to a Spotify playlist.
+
+    Parameters:
+    playlist_id (str): The Spotify ID of the playlist to add songs to.
+    track_uris (list of str): A list of Spotify track URIs to add to the playlist.
+    spotify_token (str): Spotify Authorization token.
+
+    Returns:
+    response: The response object from the Spotify API request.
+    """
+    
+    # Endpoint URL for adding tracks to a playlist
+    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    
+
+    # Headers for the POST request, including the authorization token
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with the track URIs
+    data = {"uris": track_uris}
+
+    # Sending POST request to the Spotify API
+    response = requests.post(url, headers=headers, json=data)
+    print(response.status_code)
+    print(response.json())
+
+    return response
 
 def create_playlist(playlist_name, spotify_token):
     # Spotify API endpoint for creating a playlist
@@ -165,7 +205,7 @@ def create_playlist(playlist_name, spotify_token):
     data = {
         "name": playlist_name,
         "description": "Created with Python",
-        "public": False  # Set to True if you want the playlist to be public
+        "public": True  # Set to True if you want the playlist to be public
     }
 
     # Sending POST request to the Spotify API
@@ -179,8 +219,6 @@ def create_playlist(playlist_name, spotify_token):
     else:
         return None  
     
-def add_songs(playlist_id, results):
-    """do stuff"""
 
 def parse_sentence(input):
     sentence = input.split()
