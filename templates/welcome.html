@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Welcome</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Welcome, {{ user_name }}!</h1>
+    <h1 class="header">Welcome, {{ user_name }}!</h1>
     <p>Enjoy your time on our platform.</p>
-    <a href='/logout'><button>Logout</button></a>
+    <a href='/logout'><button class="button">Logout</button></a>
 </body>
 </html>
