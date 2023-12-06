@@ -8,6 +8,9 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
+import base64
+
+
 
 from dotenv import load_dotenv
 load_dotenv()  
@@ -94,7 +97,7 @@ def protected_area():
 
 @app.route("/spotify_login")
 def spotify_login():
-    scope = "user-read-private playlist-modify-public playlist-modify-private"  # Add or modify scopes as needed
+    scope = "user-read-private playlist-modify-public playlist-modify-private ugc-image-upload"  # Add or modify scopes as needed
     auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
     return redirect(auth_url)
 
@@ -150,12 +153,65 @@ def spotify_test():
         
 
         add_songs(playlist_id, results_ids, spotify_token)
-
+        create_playlist_cover(playlist_id, spotify_token)
         # Redirect or render a template after processing
         return redirect("/protected_area")  # Redirect to some other page or
 
     # If it's a GET request, just render the form page
     return render_template("/protected_area")
+
+def create_playlist_cover(playlist_id, spotify_token):
+    # Assume you have a playlist ID to use
+    playlist_id = playlist_id
+
+    # Fetch and process the dog image
+    dog_image_url = fetch_random_dog_image()
+    base64_image = download_and_convert_image(dog_image_url)
+    
+    # Upload to Spotify
+    spotify_token = spotify_token
+    upload_playlist_cover(playlist_id, base64_image, spotify_token)
+
+    return "Playlist cover updated!"
+
+def fetch_random_dog_image():
+    response = requests.get('https://dog.ceo/api/breeds/image/random')
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+       
+        # Validate if the 'message' key with the image URL is present
+        if 'message' in data and data['message'].startswith('http'):
+            return data['message']
+        else:
+            print("Invalid content received from Dog CEO API")
+            return None
+    else:
+        print(f"Failed to fetch from Dog CEO API. Status code: {response.status_code}")
+        return None
+
+def download_and_convert_image(image_url):
+    response = requests.get(image_url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        return base64.b64encode(response.content).decode('utf-8')
+    else:
+        print(f"Failed to fetch image. Status code: {response.status_code}")
+        return None
+
+def upload_playlist_cover(playlist_id, image_data, token):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "image/jpeg"
+    }
+    response = requests.put(
+        f'https://api.spotify.com/v1/playlists/{playlist_id}/images',
+        headers=headers,
+        data=image_data
+    )
+
 
 def add_songs(playlist_id, track_uris, spotify_token):
     """
