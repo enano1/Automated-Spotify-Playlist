@@ -1,20 +1,34 @@
 import os
 import pathlib
 
+import math
 import requests
 from flask import Flask, session, abort, redirect, request, render_template
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
+import base64
+
+
+
+from dotenv import load_dotenv
+load_dotenv()  
+# hi hi``
 
 app = Flask("Google Login App")
-app.secret_key = "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" # make sure this matches with that's in client_secret.json
-
+app.secret_key = os.environ.get("SECRET_KEY") # make sure this matches with that's in client_secret.json
+print(app.secret_key)
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
 GOOGLE_CLIENT_ID = "341501985016-cneblrth1bp5gmda83jrvoaf1vn8cdkp.apps.googleusercontent.com"
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID") 
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_SECRET_ID") 
+SPOTIFY_REDIRECT_URI = "http://127.0.0.1:5000/spotify_callback"
+SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
+SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
@@ -80,6 +94,260 @@ def protected_area():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
     return render_template('welcome.html', user_name=user_name)
 
+
+@app.route("/spotify_login")
+def spotify_login():
+    scope = "user-read-private playlist-modify-public playlist-modify-private ugc-image-upload"  # Add or modify scopes as needed
+    auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
+    return redirect(auth_url)
+
+# Add a new route for Spotify Callback
+@app.route("/spotify_callback")
+def spotify_callback():
+    code = request.args.get('code')
+    token_data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'client_id': SPOTIFY_CLIENT_ID,
+        'client_secret': SPOTIFY_CLIENT_SECRET
+    }
+    response = requests.post(SPOTIFY_TOKEN_URL, data=token_data)
+    token_info = response.json()
+
+    access_token = token_info.get('access_token')
+    session["spotify_token"] = access_token
+
+    # Get user profile information to retrieve Spotify user ID
+    if access_token:
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        user_profile_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
+        user_profile_info = user_profile_response.json()
+
+        session["spotify_user_id"] = user_profile_info.get('id')
+
+
+    # Store Spotify token in session or handle it as needed
+    session["spotify_token"] = token_info.get('access_token')
+    return redirect("/protected_area")
+
+@app.route('/spotify_test', methods=['GET', 'POST'])
+def spotify_test():
+    if request.method == 'POST':
+        # Extract the text input from the form
+        text_input = request.form['text_input']
+        results = parse_sentence(text_input)    
+        for result in results:
+            print(result['name'], " ", result['artists'][0]['name'])
+
+        spotify_token = session.get("spotify_token")
+        playlist = create_playlist("test", spotify_token)
+        if playlist is not None:
+            playlist_id = playlist['id']
+
+        results_ids = []
+        for song in results:
+            results_ids.append(song['uri'])
+        
+
+        add_songs(playlist_id, results_ids, spotify_token)
+        create_playlist_cover(playlist_id, spotify_token)
+        # Redirect or render a template after processing
+        return redirect("/protected_area")  # Redirect to some other page or
+
+    # If it's a GET request, just render the form page
+    return render_template("/protected_area")
+
+def create_playlist_cover(playlist_id, spotify_token):
+    # Assume you have a playlist ID to use
+    playlist_id = playlist_id
+
+    # Fetch and process the dog image
+    dog_image_url = fetch_random_dog_image()
+    base64_image = download_and_convert_image(dog_image_url)
+    
+    # Upload to Spotify
+    spotify_token = spotify_token
+    upload_playlist_cover(playlist_id, base64_image, spotify_token)
+
+    return "Playlist cover updated!"
+
+def fetch_random_dog_image():
+    response = requests.get('https://dog.ceo/api/breeds/image/random')
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+       
+        # Validate if the 'message' key with the image URL is present
+        if 'message' in data and data['message'].startswith('http'):
+            return data['message']
+        else:
+            print("Invalid content received from Dog CEO API")
+            return None
+    else:
+        print(f"Failed to fetch from Dog CEO API. Status code: {response.status_code}")
+        return None
+
+def download_and_convert_image(image_url):
+    response = requests.get(image_url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        return base64.b64encode(response.content).decode('utf-8')
+    else:
+        print(f"Failed to fetch image. Status code: {response.status_code}")
+        return None
+
+def upload_playlist_cover(playlist_id, image_data, token):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "image/jpeg"
+    }
+    response = requests.put(
+        f'https://api.spotify.com/v1/playlists/{playlist_id}/images',
+        headers=headers,
+        data=image_data
+    )
+
+
+def add_songs(playlist_id, track_uris, spotify_token):
+    """
+    Adds songs to a Spotify playlist.
+
+    Parameters:
+    playlist_id (str): The Spotify ID of the playlist to add songs to.
+    track_uris (list of str): A list of Spotify track URIs to add to the playlist.
+    spotify_token (str): Spotify Authorization token.
+
+    Returns:
+    response: The response object from the Spotify API request.
+    """
+    
+    # Endpoint URL for adding tracks to a playlist
+    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    
+
+    # Headers for the POST request, including the authorization token
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with the track URIs
+    data = {"uris": track_uris}
+
+    # Sending POST request to the Spotify API
+    response = requests.post(url, headers=headers, json=data)
+    print(response.status_code)
+    print(response.json())
+
+    return response
+
+def create_playlist(playlist_name, spotify_token):
+    # Spotify API endpoint for creating a playlist
+    user_id = session["spotify_user_id"]
+    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+    
+    # Headers for the POST request, including the authorization token
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with the playlist name
+    data = {
+        "name": playlist_name,
+        "description": "Created with Python",
+        "public": True  # Set to True if you want the playlist to be public
+    }
+
+    # Sending POST request to the Spotify API
+    response = requests.post(url, headers=headers, json=data)
+    print(response.status_code)
+    print(response.json())
+
+    # Check if the request was successful
+    if response.status_code == 201:
+        return response.json()  # Returns the created playlist details as JSON
+    else:
+        return None  
+    
+
+def parse_sentence(input):
+    sentence = input.split()
+    spotify_token = session.get("spotify_token")
+    print(sentence)
+    results = []
+    for word in sentence:
+        search_result = search_spotify(word, spotify_token)
+
+        if search_result['tracks'] and search_result['tracks']['items']:
+            closest_result = search_result['tracks']['items'][0]
+            closest_score = math.inf
+            for track in search_result['tracks']['items']:
+                track_string = track['name']
+                similarity = compare_similarity(word, track_string)
+                if similarity < closest_score:
+                    closest_result = track
+                    closest_score = similarity
+                print(track_string, similarity)
+                if similarity == 0:
+                    break
+            print()
+            results.append(closest_result)
+            
+        else:
+            continue
+    return results
+
+def compare_similarity(s1, s2):
+    """compares the similarity of two strings (Levenshtein difference)"""
+    # Code from https://www.educative.io/answers/the-levenshtein-distance-algorithm
+    a = s1.lower()
+    b = s2.lower()
+    
+
+    # Declaring array 'D' with rows = len(a) + 1 and columns = len(b) + 1:
+    D = [[0 for i in range(len(b) + 1)] for j in range(len(a) + 1)]
+    # Initialising first row:
+    for i in range(len(a) + 1):
+        D[i][0] = i
+    # Initialising first column:
+    for j in range(len(b) + 1):
+        D[0][j] = j
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            if a[i - 1] == b[j - 1]:
+                D[i][j] = D[i - 1][j - 1]
+            else:
+                # Adding 1 to account for the cost of operation
+                insertion = 1 + D[i][j - 1]
+                deletion = 1 + D[i - 1][j]
+                replacement = 1 + D[i - 1][j - 1]
+
+                # Choosing the best option:
+                D[i][j] = min(insertion, deletion, replacement)
+
+    return D[len(a)][len(b)]
+
+
+def search_spotify(query, token):
+    search_url = 'https://api.spotify.com/v1/search'
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    refined_query = f'"{query}"'
+
+    params = {
+        'q': refined_query,
+        'type': 'track',
+        'limit': 50  # number of results to return
+    }
+    response = requests.get(search_url, headers=headers, params=params)
+    return response.json()
 
 if __name__ == '__main__':
     app.run()
