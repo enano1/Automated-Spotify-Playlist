@@ -12,23 +12,157 @@ body {
     align-items: center;
 }
 
-.button {
-    display: inline-block;
-    font-family: 'Quicksand', sans-serif;
-    font-weight: 700;
-    font-size: 1em;
-    text-align: center;
+.nav-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    align-items: top;
+    width: 100%;
+    height: 1.8em;
+    /* border: solid 1px black; */
+}
+
+.welcome {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 300;
+    font-size: .7em;
+    margin-right: .6em;
+}
+
+.logout-button {
+    font-weight: 300;
+    font-size: .7em;
     color: black;
-    padding: 10px 20px;
-    margin: 10px 2px;
     border: none;
     border-radius: 5px;
     background-color: #dadada;
-    /* border-color: black; */
     text-decoration: none;
     transition: background-color 0.3s ease;
+    cursor: pointer;
+    padding: .6em;
+    text-align: center;
+    margin-right: .6em;
   }
   
-  .button:hover {
+  .logout-button:hover {
     background-color: #9a9a9a;
   }
+
+  .title {
+    font-size: 1em;
+  }
+
+  .spotify-login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 1em;
+  }
+  
+
+  .spotify-button {
+    font-weight: 300;
+    font-size: .7em;
+    padding: .6em;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    background-color: #2ecc71;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .instructions {
+    font-size: .7em;
+    margin-bottom: .7em;
+  }
+
+  .spotify-button-disabled {
+    font-weight: 300;
+    font-size: .7em;
+    padding: .6em;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 5px;
+    background-color: #cccccc;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    cursor: not-allowed;
+    /* display: none; */
+  }
+
+.spotify-button:hover {
+    background-color: #27ae60;
+}
+
+.spotify-button:active {
+  background-color: #1e884a;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 1em;
+}
+
+.prompt {
+  font-size: .7em;
+  margin-bottom: 0.5em;
+}
+
+.text-input {
+  font-size: 1em;
+  padding: 0.5em;
+  border: 1px solid #d2d2d2;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+
+.text-input:focus {
+  outline: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.submit-button {
+  margin: 1em;
+  font-weight: 300;
+  font-size: .7em;
+  padding: .6em;
+  border: none;
+  border-radius: 5px;
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+.submit-button:active {
+  background-color: #003d80;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 100px;
+  height: 100px;
+  animation: spin 2s linear infinite;
+  display: none;  /* Hidden by default */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
