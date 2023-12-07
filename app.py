@@ -10,8 +10,6 @@ from pip._vendor import cachecontrol
 import google.auth.transport.requests
 import base64
 
-
-
 from dotenv import load_dotenv
 load_dotenv()  
 # hi hi``
