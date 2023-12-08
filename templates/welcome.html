@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Welcome</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    
 </head>
 
 <body>
@@ -16,19 +15,22 @@
     </div>
     <hr>
     <p class="title">Create Messages With Spotify Playlists!</p>
-    <div class="spotify-login">
-        <p class="instructions">Step 1: Login to your Spotify account</p>
-        <a href='/spotify_login' id="spotify-button">
-            <button class="spotify-button">Login to Spotify</button>
-        </a>
-        <!-- <button class="spotify-button-disabled" id="spotify-button-disabled">Logged into Spotify</button> -->
+    <div id="fade">
+        <div id="form" style="border: 1px solid black; border-radius: 4px; margin-top: 25px;">
+            <div class="spotify-login">
+                <p class="instructions">Step 1: Login to your Spotify account</p>
+                <a href='/spotify_login' id="spotify-button">
+                    <button class="spotify-button">Login to Spotify</button>
+                </a>
+            </div>
+            
+            <form id="form" class="form" action="/spotify_test" method="post">
+                <label for="text_input" class="instructions">Step 2: Enter A Prompt</label>
+                <input type="text" id="text_input" name="text_input" class="text-input">
+                <button type="submit" class="submit-button" id="submit-button">Submit</button>
+            </form>
+        </div>
     </div>
-    
-    <form id="form" class="form" action="/spotify_test" method="post">
-        <label for="text_input" class="instructions">Step 2: Enter A Prompt</label>
-        <input type="text" id="text_input" name="text_input" class="text-input">
-        <button type="submit" class="submit-button" id="submit-button">Submit</button>
-    </form>
 
     <div class="loader" id="loader"></div>
 

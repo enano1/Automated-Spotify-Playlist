@@ -10,25 +10,16 @@
 <body>
     <div class="nav-bar">
         <div class="welcome"><p>Welcome, {{ user_name }}</p></div>
-        <a href='/logout' id="logout-button"><button class="logout-button">Logout</button></a>  
-        
-    </div>
-    <hr>
-    <p class="title">Create Messages With Spotify Playlists!</p>
-    <div class="spotify-login">
-        <p class="instructions">Step 1: Login to your Spotify account</p>
-        <a href='/spotify_login' id="spotify-button">
-            <button class="spotify-button">Login to Spotify</button>
-        </a>
+        <a href='/logout' id="logout-button"><button class="logout-button">Logout</button></a>       
     </div>
     
-    <form id="form" class="form" action="/spotify_test" method="post">
-        <label for="text_input" class="instructions">Step 2: Enter A Prompt</label>
-        <input type="text" id="text_input" name="text_input" class="text-input">
-        <button type="submit" class="submit-button">Submit</button>
-    </form>
+    <hr>
 
+    <p class="title">Create Messages With Spotify Playlists!</p>
+    
     <p class="success">👍 Success! Check your Spotify Library 🐶</p>
+
+    <a href="/protected_area"><button class="submit-button">Create Another</button></a>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
