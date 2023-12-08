@@ -193,6 +193,10 @@ body {
     opacity: 0.8;
 }
 
+.container input[type=submit]:active {
+  opacity: 0.5;
+}
+
 .label {
   font-size: .7em;
 }
@@ -215,7 +219,7 @@ body {
 }
 
 .register-button:active {
-  background-color: #003d80;
+  background-color: #6fb4ff;
 }
 
 .header {
