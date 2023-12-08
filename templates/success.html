@@ -9,7 +9,7 @@
 
 <body>
     <div class="nav-bar">
-        <div class="welcome"><p>Welcome, {{ user_name }}!</p></div>
+        <div class="welcome"><p>Welcome, {{ user_name }}</p></div>
         <a href='/logout' id="logout-button"><button class="logout-button">Logout</button></a>  
         
     </div>
@@ -20,7 +20,6 @@
         <a href='/spotify_login' id="spotify-button">
             <button class="spotify-button">Login to Spotify</button>
         </a>
-        <!-- <button class="spotify-button-disabled" id="spotify-button-disabled">Logged into Spotify</button> -->
     </div>
     
     <form id="form" class="form" action="/spotify_test" method="post">
@@ -29,7 +28,7 @@
         <button type="submit" class="submit-button">Submit</button>
     </form>
 
-    <p>Success! Check your Spotify Library!</p>
+    <p class="success">👍 Success! Check your Spotify Library 🐶</p>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

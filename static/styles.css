@@ -59,9 +59,8 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin: 1em;
+    margin: .5em;
   }
-  
 
   .spotify-button {
     font-weight: 300;
@@ -79,20 +78,6 @@ body {
   .instructions {
     font-size: .7em;
     margin-bottom: .7em;
-  }
-
-  .spotify-button-disabled {
-    font-weight: 300;
-    font-size: .7em;
-    padding: .6em;
-    color: rgb(148, 148, 148);
-    border: none;
-    border-radius: 5px;
-    background-color: #cccccc;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
-    cursor: not-allowed;
-    /* display: none; */
   }
 
 .spotify-button:hover {
@@ -131,7 +116,7 @@ body {
 }
 
 .submit-button {
-  margin: 1em;
+  margin: .8em;
   font-weight: 300;
   font-size: .7em;
   padding: .6em;
@@ -165,4 +150,78 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.success {
+  color:#27ae60;
+}
+
+.container {
+    width: 300px;
+    padding: 16px;
+    background-color: white;
+    margin: 0 auto;
+    margin-top: 100px;
+    border: 1px solid black;
+    border-radius: 4px;
+}
+
+.container input[type=text], .container input[type=password] {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.container input[type=submit] {
+  font-weight: 300;
+  font-size: .7em;
+  padding: .6em;
+  margin-top: .5em;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  background-color: #2ecc71;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.container input[type=submit]:hover {
+    opacity: 0.8;
+}
+
+.label {
+  font-size: .7em;
+}
+
+.register-button {
+  margin: .3em;
+  font-weight: 300;
+  font-size: .5em;
+  padding: .5em;
+  border: none;
+  border-radius: 5px;
+  background-color: #0071ea;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.register-button:hover {
+  background-color: #459fff;
+}
+
+.register-button:active {
+  background-color: #003d80;
+}
+
+.header {
+  font-size: 1.5em;
+  font-weight: 300;
+  margin-bottom: -1em;
+}
+
 
