@@ -85,6 +85,10 @@ def logout():
 def index():
     return render_template('home.html')
 
+@app.route("/register")
+def register():
+    return render_template('register.html')
+
 
 @app.route("/protected_area")
 @login_is_required

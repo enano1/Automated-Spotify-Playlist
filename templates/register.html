@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+
+    <h3 class="header">Project 11 Register</h3>
+    <div class="container" >
+        <form action="/" method="POST" onsubmit="refreshPage()">
+            <label for="email" style="font-size: 20px;">Email:</label><br>
+            <input type="text" id="email" name="email" required><br>
+            <label for="password" style="font-size: 20px;">Password:</label><br>
+            <input type="password" id="password" name="password" required><br>
+            <label for="confirm_password" style="font-size: 20px;">Confirm Password:</label><br>
+            <input type="password" id="confirm_password" name="confirm_password" required><br>
+            <input type="submit" value="Register">
+        </form>
+    </div>
+
+    <script>
+        function refreshPage() {
+            // This function will be called when the form is submitted
+            location.reload();
+        }
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    
+</body>
+</html>
