@@ -99,7 +99,8 @@ def protected_area():
 @app.route("/protected_area_success")
 def protected_area_success():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
-    return render_template('success.html', user_name=user_name)
+    spotify_link = session.get('spotify_link', '')  
+    return render_template('success.html', user_name=user_name, spotify_link=spotify_link)
 
 
 @app.route("/spotify_login")
@@ -152,8 +153,11 @@ def spotify_test():
 
         spotify_token = session.get("spotify_token")
         playlist = create_playlist("Spotify Playlist", spotify_token)
+        print(playlist)
         if playlist is not None:
             playlist_id = playlist['id']
+            
+        print(playlist_id)
 
         results_ids = []
         for song in results:
@@ -162,7 +166,12 @@ def spotify_test():
 
         add_songs(playlist_id, results_ids, spotify_token)
         create_playlist_cover(playlist_id, spotify_token)
+
         # Redirect or render a template after processing
+
+        spotify_link = f"https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator"
+        session['spotify_link'] = spotify_link
+
         return redirect("/protected_area_success")  # Redirect to some other page or
 
     # If it's a GET request, just render the form page
