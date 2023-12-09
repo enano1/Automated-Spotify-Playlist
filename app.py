@@ -150,7 +150,7 @@ def spotify_test():
             print(result['name'], " ", result['artists'][0]['name'])
 
         spotify_token = session.get("spotify_token")
-        playlist = create_playlist("test", spotify_token)
+        playlist = create_playlist("Spotify Playlist", spotify_token)
         if playlist is not None:
             playlist_id = playlist['id']
 
