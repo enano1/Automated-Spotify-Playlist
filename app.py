@@ -94,7 +94,12 @@ def register():
 @login_is_required
 def protected_area():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
-    return render_template('welcome.html', user_name=user_name)
+    return render_template('step1.html', user_name=user_name)
+
+@app.route("/protected_area2")
+def protected_area():
+    user_name = session.get('name', 'Guest')
+    return render_template('step2.html', user_name=user_name)
 
 @app.route("/protected_area_success")
 def protected_area_success():
@@ -140,7 +145,7 @@ def spotify_callback():
 
     # Store Spotify token in session or handle it as needed
     session["spotify_token"] = token_info.get('access_token')
-    return redirect("/protected_area")
+    return redirect("/protected_area2")
 
 @app.route('/spotify_test', methods=['GET', 'POST'])
 def spotify_test():
