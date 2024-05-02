@@ -38,7 +38,7 @@ For queries or assistance, contact the team members via their GitHub profiles.
 For more detailed documentation, refer to the `documentation` folder in the repository.
 
 ## IMPORTANT NOTE:
-- Many of our API's have been deactivated, so in order to run the project, you would need to generate your own:
+- All of our API's have been deactivated, so in order to run the project, you would need to generate your own:
      - Spotify Development API key
      - Google Firebase API key (Client and Secret)
 
