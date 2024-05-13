@@ -125,42 +125,53 @@ def protected_area_success():
 
 
 @app.route("/spotify_login")
+# Authorize your application to access their Spotify account with specific permissions
 def spotify_login():
-    scope = "user-read-private playlist-modify-public playlist-modify-private ugc-image-upload"  # Add or modify scopes as needed
+    # scopes allow reading private user data and modifying user playlists, including uploading custom images to playlists
+    scope = "user-read-private playlist-modify-public playlist-modify-private ugc-image-upload"
+    
+    # Constructed URL to Spotify Authorization containing necessary query parameters such as the client ID, requested scopes, and the redirect URI
     auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
     return redirect(auth_url)
 
-# Add a new route for Spotify Callback
+# Handles the response from Spotify after user authentication
 @app.route("/spotify_callback")
 def spotify_callback():
-    code = request.args.get('code')
+    code = request.args.get('code')     # Get authorization code from query parameters
     token_data = {
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': SPOTIFY_REDIRECT_URI,
         'client_id': SPOTIFY_CLIENT_ID,
         'client_secret': SPOTIFY_CLIENT_SECRET
-    }
+    }   # Prepare data for token request
+    
+    # sends an HTTP POST request to Spotify's token endpoint
     response = requests.post(SPOTIFY_TOKEN_URL, data=token_data)
+    # Parsing the JSON Response
     token_info = response.json()
-
+    # Retrieving the Access Token from token_info dictionary
     access_token = token_info.get('access_token')
+    # Storing the Access Token in Session
     session["spotify_token"] = access_token
 
     # Get user profile information to retrieve Spotify user ID
     if access_token:
         headers = {
             "Authorization": f"Bearer {access_token}"
-        }
+        }   # Prepare authorization header
+        # Request user profile
         user_profile_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
-        user_profile_info = user_profile_response.json()
+        user_profile_info = user_profile_response.json()    # Parse JSON response
 
+        # Store Spotify user ID in session
         session["spotify_user_id"] = user_profile_info.get('id')
 
 
     # Store Spotify token in session or handle it as needed
     session["spotify_token"] = token_info.get('access_token')
     return redirect("/protected_area2")
+
 
 @app.route('/spotify_test', methods=['GET', 'POST'])
 def spotify_test():
