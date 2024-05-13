@@ -1,18 +1,23 @@
-import os
-import pathlib
 
+import os       # Used to access environment variables for application configuration
+import pathlib  # Ensures compatibility across different operating systems
 import math
+
+# Enables HTTP requests to external APIs, essential for interactions with Google and Spotify
 import requests
 from flask import Flask, session, abort, redirect, request, render_template
-from google.oauth2 import id_token
-from google_auth_oauthlib.flow import Flow
-from pip._vendor import cachecontrol
+from google.oauth2 import id_token              # Verifies Google ID tokens to authenticate users securely
+from google_auth_oauthlib.flow import Flow      # managing authentication and token exchange
+from pip._vendor import cachecontrol            # Adds caching to HTTP sessions
 import google.auth.transport.requests
+
+# for encoding/decoding (handling img data)
 import base64
 
+# load environment variables from .env file for secure configuration
 from dotenv import load_dotenv
-load_dotenv()  
-# hi hi``
+load_dotenv()
+
 
 app = Flask("Google Login App")
 app.secret_key = os.environ.get("SECRET_KEY") # make sure this matches with that's in client_secret.json
@@ -20,21 +25,23 @@ print(app.secret_key)
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
 GOOGLE_CLIENT_ID = "341501985016-cneblrth1bp5gmda83jrvoaf1vn8cdkp.apps.googleusercontent.com"
-client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")     # Define path to client secrets file
 
 SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID") 
 SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_SECRET_ID") 
-SPOTIFY_REDIRECT_URI = "http://127.0.0.1:5000/spotify_callback"
+SPOTIFY_REDIRECT_URI = "http://127.0.0.1:5000/spotify_callback"     # Set redirect URI for Spotify callback
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
+# Flow object is useful for verifying identity of the users to ensure interactions are secure and trusted
+# and handles of users to access specific information from their Google account
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
     redirect_uri="http://127.0.0.1:5000/callback"
 )
 
-
+# Ensures that a user is authenticated before allowing access to certain routes
 def login_is_required(function):
     def wrapper(*args, **kwargs):
         if "google_id" not in session:
@@ -47,18 +54,23 @@ def login_is_required(function):
 
 @app.route("/login")
 def login():
+    # asks Google to create a special URL leading to Google's login page (unique and secure)
     authorization_url, state = flow.authorization_url()
+    # saved in your app's memory (make sure login process not tampered with)
     session["state"] = state
     return redirect(authorization_url)
 
 
+# Securely handling user authentication and setting up the user's session
 @app.route("/callback")
 def callback():
+    # exchanges the authorization code for access tokens
     flow.fetch_token(authorization_response=request.url)
 
     if not session["state"] == request.args["state"]:
-        abort(500)  # State does not match!
+        abort(500)  # State mismatch, potential CSRF (Cross-Site Request Forgery) attack
 
+    # retrieves the user's profile information using access tokens
     credentials = flow.credentials
     request_session = requests.session()
     cached_session = cachecontrol.CacheControl(request_session)
@@ -70,17 +82,21 @@ def callback():
         audience=GOOGLE_CLIENT_ID
     )
 
+    # stores the user's Google ID and name
     session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
+    
+    # redirects to a protected area of the app
     return redirect("/protected_area")
 
 
+# clears the user's session and redirect the user back to home page
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-
+# (@app.route) is route decorator to assign functions to handle specific routes
 @app.route("/")
 def index():
     return render_template('home.html')
@@ -91,7 +107,7 @@ def register():
 
 
 @app.route("/protected_area")
-@login_is_required
+@login_is_required      # Apply login required decorator
 def protected_area():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
     return render_template('step1.html', user_name=user_name)
@@ -104,12 +120,11 @@ def protected_area():
 @app.route("/protected_area_success")
 def protected_area_success():
     user_name = session.get('name', 'Guest')  # Default to 'Guest' if name is not in session
-    spotify_link = session.get('spotify_link', '')  
+    spotify_link = session.get('spotify_link', '')
     return render_template('success.html', user_name=user_name, spotify_link=spotify_link)
 
 
 @app.route("/spotify_login")
-
 def spotify_login():
     scope = "user-read-private playlist-modify-public playlist-modify-private ugc-image-upload"  # Add or modify scopes as needed
     auth_url = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
