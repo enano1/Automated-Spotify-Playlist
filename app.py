@@ -178,23 +178,28 @@ def spotify_test():
     if request.method == 'POST':
         # Extract the text input from the form
         text_input = request.form['text_input']
-        results = parse_sentence(text_input)    
-        for result in results:
-            print(result['name'], " ", result['artists'][0]['name'])
+        # contains the best matching Spotify track for each word in the original sentence
+        results = parse_sentence(text_input)
+        
+        # for result in results:
+        #     print(result['name'], " ", result['artists'][0]['name'])
 
+        # Access token from user session to call Spotify's API
+        # granting the application the necessary permissions
         spotify_token = session.get("spotify_token")
         playlist = create_playlist("Spotify Playlist", spotify_token)
-        print(playlist)
+        
+        # print(playlist)
         if playlist is not None:
             playlist_id = playlist['id']
-            
-        print(playlist_id)
+        # print(playlist_id)
 
+        # List of Spotify URIs (Unique Resource Identifiers)
+        # Necessary for adding these tracks to playlist
         results_ids = []
         for song in results:
             results_ids.append(song['uri'])
         
-
         add_songs(playlist_id, results_ids, spotify_token)
         create_playlist_cover(playlist_id, spotify_token)
 
@@ -207,6 +212,102 @@ def spotify_test():
 
     # If it's a GET request, just render the form page
     return render_template("/protected_area")
+
+
+# Used in spotify_test function
+def parse_sentence(input):
+    sentence = input.split()
+    spotify_token = session.get("spotify_token")
+    print(sentence)
+    results = []
+    for word in sentence:
+        # For each word, Spotify's search API finds tracks that match the word
+        search_result = search_spotify(word, spotify_token)
+
+        if search_result['tracks'] and search_result['tracks']['items']:
+            closest_result = search_result['tracks']['items'][0]
+            closest_score = math.inf
+            for track in search_result['tracks']['items']:
+                track_string = track['name']
+                similarity = compare_similarity(word, track_string)
+                # Updating the new closest result and score
+                if similarity < closest_score:
+                    closest_result = track
+                    closest_score = similarity
+                print(track_string, similarity)
+                
+                # No need to keep looking if perfect match
+                if similarity == 0:
+                    break
+            print()
+            results.append(closest_result)
+            
+        else:
+            continue
+    return results
+
+def create_playlist(playlist_name, spotify_token):
+    # Spotify API endpoint for creating a playlist
+    user_id = session["spotify_user_id"]
+    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+    
+    # Headers for the POST request, including the authorization token
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with new playlist's details
+    data = {
+        "name": playlist_name,
+        "description": "Created with Python",
+        "public": True  # Set to True if you want the playlist to be public
+    }
+
+    # Sending POST request to the Spotify API (where communication w/ Spotify API happens)
+    response = requests.post(url, headers=headers, json=data)
+    # print(response.status_code)
+    # print(response.json())
+
+    # Check if the request was successful
+    if response.status_code == 201:
+        return response.json()  # Returns the created playlist details as JSON
+    else:
+        return None  
+
+def add_songs(playlist_id, track_uris, spotify_token):
+    """
+    Adds songs to a Spotify playlist.
+
+    Parameters:
+    playlist_id (str): The Spotify ID of the playlist to add songs to.
+    track_uris (list of str): A list of Spotify track URIs to add to the playlist.
+    spotify_token (str): Spotify Authorization token.
+
+    Returns:
+    response: The response object from the Spotify API request.
+    """
+    
+    # Endpoint URL for adding tracks to a playlist
+    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+    
+
+    # Headers for the POST request, including the authorization token
+    # Requests that modify data are usually formatted as JSON
+    headers = {
+        "Authorization": f"Bearer {spotify_token}",
+        "Content-Type": "application/json"
+    }
+
+    # JSON data with the track URIs
+    data = {"uris": track_uris}
+
+    # Sending POST request to the Spotify API
+    response = requests.post(url, headers=headers, json=data)
+    # print(response.status_code)
+    # print(response.json())
+
+    return response
 
 def create_playlist_cover(playlist_id, spotify_token):
     # Assume you have a playlist ID to use
@@ -261,99 +362,15 @@ def upload_playlist_cover(playlist_id, image_data, token):
     )
 
 
-def add_songs(playlist_id, track_uris, spotify_token):
-    """
-    Adds songs to a Spotify playlist.
 
-    Parameters:
-    playlist_id (str): The Spotify ID of the playlist to add songs to.
-    track_uris (list of str): A list of Spotify track URIs to add to the playlist.
-    spotify_token (str): Spotify Authorization token.
 
-    Returns:
-    response: The response object from the Spotify API request.
-    """
-    
-    # Endpoint URL for adding tracks to a playlist
-    url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-    
-
-    # Headers for the POST request, including the authorization token
-    headers = {
-        "Authorization": f"Bearer {spotify_token}",
-        "Content-Type": "application/json"
-    }
-
-    # JSON data with the track URIs
-    data = {"uris": track_uris}
-
-    # Sending POST request to the Spotify API
-    response = requests.post(url, headers=headers, json=data)
-    print(response.status_code)
-    print(response.json())
-
-    return response
-
-def create_playlist(playlist_name, spotify_token):
-    # Spotify API endpoint for creating a playlist
-    user_id = session["spotify_user_id"]
-    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
-    
-    # Headers for the POST request, including the authorization token
-    headers = {
-        "Authorization": f"Bearer {spotify_token}",
-        "Content-Type": "application/json"
-    }
-
-    # JSON data with the playlist name
-    data = {
-        "name": playlist_name,
-        "description": "Created with Python",
-        "public": True  # Set to True if you want the playlist to be public
-    }
-
-    # Sending POST request to the Spotify API
-    response = requests.post(url, headers=headers, json=data)
-    print(response.status_code)
-    print(response.json())
-
-    # Check if the request was successful
-    if response.status_code == 201:
-        return response.json()  # Returns the created playlist details as JSON
-    else:
-        return None  
-    
-
-def parse_sentence(input):
-    sentence = input.split()
-    spotify_token = session.get("spotify_token")
-    print(sentence)
-    results = []
-    for word in sentence:
-        search_result = search_spotify(word, spotify_token)
-
-        if search_result['tracks'] and search_result['tracks']['items']:
-            closest_result = search_result['tracks']['items'][0]
-            closest_score = math.inf
-            for track in search_result['tracks']['items']:
-                track_string = track['name']
-                similarity = compare_similarity(word, track_string)
-                if similarity < closest_score:
-                    closest_result = track
-                    closest_score = similarity
-                print(track_string, similarity)
-                if similarity == 0:
-                    break
-            print()
-            results.append(closest_result)
-            
-        else:
-            continue
-    return results
-
+# Levenshtein distance measures the minimum number of single-character edits 
+# (insertions, deletions, or substitutions) required to change one word into another.
+# Time complexity: O(mn) where m, n are lenghts of two strings
 def compare_similarity(s1, s2):
     """compares the similarity of two strings (Levenshtein difference)"""
     # Code from https://www.educative.io/answers/the-levenshtein-distance-algorithm
+    # Comparison is case-insensitive
     a = s1.lower()
     b = s2.lower()
     
