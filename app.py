@@ -218,7 +218,7 @@ def spotify_test():
 def parse_sentence(input):
     sentence = input.split()
     spotify_token = session.get("spotify_token")
-    print(sentence)
+    # print(sentence)
     results = []
     for word in sentence:
         # For each word, Spotify's search API finds tracks that match the word
@@ -229,7 +229,9 @@ def parse_sentence(input):
             closest_score = math.inf
             for track in search_result['tracks']['items']:
                 track_string = track['name']
+                # Use Levenshtein distance algorithm
                 similarity = compare_similarity(word, track_string)
+                
                 # Updating the new closest result and score
                 if similarity < closest_score:
                     closest_result = track
@@ -313,7 +315,7 @@ def create_playlist_cover(playlist_id, spotify_token):
     # Assume you have a playlist ID to use
     playlist_id = playlist_id
 
-    # Fetch and process the dog image
+    # Returns a URL each time it is called 
     dog_image_url = fetch_random_dog_image()
     base64_image = download_and_convert_image(dog_image_url)
     
@@ -323,12 +325,14 @@ def create_playlist_cover(playlist_id, spotify_token):
 
     return "Playlist cover updated!"
 
+
 def fetch_random_dog_image():
+    # GET request to the Dog CEO API at the endpoint to get random dog img
     response = requests.get('https://dog.ceo/api/breeds/image/random')
 
     # Check if the request was successful
     if response.status_code == 200:
-        data = response.json()
+        data = response.json()      # Parse response JSON
        
         # Validate if the 'message' key with the image URL is present
         if 'message' in data and data['message'].startswith('http'):
@@ -345,6 +349,9 @@ def download_and_convert_image(image_url):
 
     # Check if the request was successful
     if response.status_code == 200:
+        # Encoding turns the binary data into byte format
+        # Decoding turns the byte format into a UTF-8 string, 
+        # making it compatible with text-based systems like JSON
         return base64.b64encode(response.content).decode('utf-8')
     else:
         print(f"Failed to fetch image. Status code: {response.status_code}")
@@ -353,8 +360,9 @@ def download_and_convert_image(image_url):
 def upload_playlist_cover(playlist_id, image_data, token):
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "image/jpeg"
+        "Content-Type": "image/jpeg"        # body of the request contains image data in JPEG format
     }
+    # Sending PUT request to Spotify API's endpoint for updating playlist images
     response = requests.put(
         f'https://api.spotify.com/v1/playlists/{playlist_id}/images',
         headers=headers,
@@ -400,15 +408,18 @@ def compare_similarity(s1, s2):
 
 
 def search_spotify(query, token):
+    # Spotify search endpoint
     search_url = 'https://api.spotify.com/v1/search'
     headers = {
         'Authorization': f'Bearer {token}'
     }
+    
+    # Makes sure we are looking for exact match of the phrase (enhance search accuracy)
     refined_query = f'"{query}"'
 
     params = {
         'q': refined_query,
-        'type': 'track',
+        'type': 'track',    # Type to return
         'limit': 50  # number of results to return
     }
     response = requests.get(search_url, headers=headers, params=params)
