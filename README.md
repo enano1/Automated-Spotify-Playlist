@@ -18,9 +18,9 @@ This innovative Flask application, SpotifyPlaylistCreator, leverages Google OAut
 ## Technical Details
 
 ### HTTP Methods
-- **GET Requests**: Used for retrieving data like user profiles and random images without changing the server state.
-- **PUT Requests**: Used to update existing resources, or to create new resources at a specified, known URL.
-- **POST Requests**: Used to submit data to create or modify playlists on Spotify, with the server providing the new URL.
+- **GET Requests** (Read): Used for retrieving data like user profiles and random images without changing the server state.
+- **PUT Requests** (Update): Used to update existing resources, or to create new resources at a specified, known URL.
+- **POST Requests** (Create): Used to submit data to create or modify playlists on Spotify, with the server providing the new URL.
 
 ### API Integration
 - **Spotify API**: Manages authentication, search, and playlist operations.

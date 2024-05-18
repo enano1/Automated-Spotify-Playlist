@@ -18,7 +18,7 @@ import base64
 from dotenv import load_dotenv
 load_dotenv()
 
-
+# Define the application
 app = Flask("Google Login App")
 app.secret_key = os.environ.get("SECRET_KEY") # make sure this matches with that's in client_secret.json
 print(app.secret_key)
@@ -51,7 +51,7 @@ def login_is_required(function):
 
     return wrapper
 
-
+# Decorator with route specified
 @app.route("/login")
 def login():
     # asks Google to create a special URL leading to Google's login page (unique and secure)
@@ -208,7 +208,7 @@ def spotify_test():
         spotify_link = f"https://open.spotify.com/embed/playlist/{playlist_id}?utm_source=generator"
         session['spotify_link'] = spotify_link
 
-        return redirect("/protected_area_success")  # Redirect to some other page or
+        return redirect("/protected_area_success")  # Redirect to some other page 
 
     # If it's a GET request, just render the form page
     return render_template("/protected_area")
