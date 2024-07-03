@@ -1,8 +1,8 @@
-# Spotify Playlist Creator with Google Authentication
+# Automated Spotify Playlist with Google Authentication
 
 ## Overview
 
-This innovative Flask application, SpotifyPlaylistCreator, leverages Google OAuth 2.0 for secure user authentication and integrates Spotify's API to create and manage playlists based on individual words or sentences provided by users. It also utilizes the Dog CEO's Dog API to fetch and set random dog images as unique playlist covers, adding a visual appeal to the playlists.
+This innovative Flask application, leverages Google OAuth 2.0 for secure user authentication and integrates Spotify's API to create and manage playlists based on individual words or sentences provided by users. It also utilizes the Dog CEO's Dog API to fetch and set random dog images as unique playlist covers, adding a visual appeal to the playlists.
 
 ## Features
 
